@@ -1,6 +1,6 @@
 """
 Rates API (V2 - Google Sheets powered)
-- GET  /api/rates          — public, returns all active rates from Google Sheets
+- GET  /api/rates          — public, returns all active rates
 - POST /api/rates/refresh  — admin, forces cache refresh
 """
 from typing import List
@@ -10,24 +10,11 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.config import get_settings
-from app.models.user import User
+from app.models.user import User, Rate
 from app.services.google_sheets_service import get_sheets_service, init_sheets_service
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/rates", tags=["rates"])
-
-
-class RateResponse(BaseModel):
-    """Response model for rates"""
-    product_name: str
-    min_rate: float
-    comp_rate: float
-    min_loan: float
-    max_loan: float
-    lender: str
-
-    class Config:
-        from_attributes = True
 
 
 class MessageResponse(BaseModel):
@@ -50,29 +37,47 @@ def _ensure_sheets_service():
     return service
 
 
-@router.get("", response_model=List[RateResponse])
-def get_rates():
+@router.get("")
+def get_rates(db: Session = Depends(get_db)):
     """
-    Public endpoint — returns all active rates from Google Sheets.
+    Public endpoint — returns all active rates.
+    Tries Google Sheets first (live data), falls back to database (seeded data).
     Cached for 1 hour to avoid API rate limits.
     """
     service = _ensure_sheets_service()
 
-    if service is None:
-        # Fallback: return empty or error response
-        raise HTTPException(
-            status_code=503,
-            detail="Google Sheets service not configured"
-        )
+    if service is not None:
+        try:
+            rates = service.get_rates()
+            return rates
+        except Exception:
+            pass  # Fall through to database
 
-    try:
-        rates = service.get_rates()
-        return rates
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error fetching rates: {str(e)}"
-        )
+    # Database fallback — map to same shape as Google Sheets response
+    db_rates = db.query(Rate).filter(Rate.is_active == True).all()
+    if not db_rates:
+        raise HTTPException(status_code=503, detail="No rates available")
+
+    return [
+        {
+            "id": r.id,
+            "bank_id": r.bank_id,
+            "name": r.name,
+            "abbr": r.abbr,
+            "color": r.color,
+            "text_color": r.text_color,
+            "bank_type": r.bank_type,
+            "loan_type": r.loan_type.value if hasattr(r.loan_type, "value") else str(r.loan_type),
+            "min_rate": r.min_rate,
+            "max_rate": r.max_rate,
+            "comp_rate": r.comp_rate,
+            "has_offset": r.has_offset,
+            "has_redraw": r.has_redraw,
+            "annual_fees": r.annual_fees,
+            "is_active": r.is_active,
+        }
+        for r in db_rates
+    ]
 
 
 @router.post("/refresh", response_model=MessageResponse)
@@ -82,35 +87,17 @@ def refresh_rates(
 ):
     """
     Admin/Broker: Force cache refresh from Google Sheets.
-    Useful if you just updated rates in the sheet.
     """
-    # Verify user is admin or broker
     if not current_user or not hasattr(current_user, 'is_admin'):
-        raise HTTPException(
-            status_code=403,
-            detail="Insufficient permissions"
-        )
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
 
     service = _ensure_sheets_service()
-
     if service is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Google Sheets service not configured"
-        )
+        raise HTTPException(status_code=503, detail="Google Sheets service not configured")
 
     try:
         service.invalidate_cache()
         rates = service.get_rates()
-        return MessageResponse(
-            message=f"Cache refreshed. {len(rates)} active rates loaded."
-        )
+        return MessageResponse(message=f"Cache refreshed. {len(rates)} active rates loaded.")
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error refreshing rates: {str(e)}"
-        )
-
-
-# Removed PUT /api/rates/bulk and PATCH /api/rates/{id}
-# Instead, edit rates directly in your Google Sheet!
+        raise HTTPException(status_code=500, detail=f"Error refreshing rates: {str(e)}")
