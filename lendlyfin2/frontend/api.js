@@ -13,8 +13,7 @@
  *   with your actual Render service URL, e.g.:
  *   https://lendlyfin-api.onrender.com
  */
-const RENDER_BACKEND_URL = 'https://lendlyfin-api.onrender.com';
-
+const RENDER_BACKEND_URL = 'https://lendlyfin2-production.up.railway.app';
 const API_BASE = window.LENDLYFIN_API || (() => {
   const h = window.location.hostname;
   if (!h || h === 'localhost' || h === '127.0.0.1') return 'http://localhost:8000';
