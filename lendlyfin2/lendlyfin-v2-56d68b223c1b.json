@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "lendlyfin-v2",
+  "private_key_id": "56d68b223c1b332c0e6d4eed0e452e10c3a5a6bc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDcyEURGxGzwj1H\nog8gBxJC9qUONj7+JXSjrGNr5R6sI/VbeJ4vUhiNt1fqKq++FJed+XOTQ0niGjT8\nF+T0mWn1ULqs17Zl5iPXwHUBBgbHvwIq+cB8/MTyP1Gc/ZQYcvcc1BlmiSoOaxvy\niF8/bIr4RIezFEVdl9I4+kcoxGAydFzVBDsjxEjzjw4p43wnv1kwQtXFGKaYrZOc\neVYbXW1vL2xGYxuzYVa9JzhTjQQgX4DHKxvBgDlLhWpaO78554qOV0L1KdoTNj6q\n+sSeUDAK0idRoDtJoJsIr6cTmn3Uuz4yQlTYGcHF7xkiMJ4gMyJG6S+0w3/9x6l+\n6Muk58bhAgMBAAECggEAFgnvywtWswj6sQHeXKYYDpMsWsTTeO8oO4Zjzktqymg0\nf9MEh1i8lrjsj7V/IYxQrjZOcS7QWz+edmO0OS5vQ0uxtrs5u+ZDQbA2fcmqN5o7\njyqrKk7ZIg1sCi3N8LrZLAmIF5Itno7WlVlDmMMvBCVjHl8xpWwYUhO5sroXmDGR\n80gu33Hewa8S1UciLY4zTrFLhAFv5S8GkQO7Q5WsLuP3IMTEwFcwx7mzaoJO/y2k\n7VNO+7VHXAdkHU9giOW0k5nQZRjoya0EV14vPVjvfZToMXbxKatj6TNDz63HQZY6\nm2f1R4koP+iS3MNjpUNJsnE2gQniUcMWnG2QbG1wuQKBgQDwUEeSXfbOJNJx6bRy\nmyQQmx4aqLuBNodvDdbXXdU0naHa7jPtbEzntxhlNfHeX278pcykBJlZJ/FCCeBH\nVgxlE3U8gyfIbP+gO3J7W4KjW7IYAk8xykE3kwQk/ZoBhOE2enCuT2p56G5MQySf\ndJ94MIqAXfRw3y6ioP2sv56EbwKBgQDrMZ2pLbUhwtjr6MPCYXfz8dy4ZiELJAzL\nkej/5uWZc7WPR+jXNIicdXyBZnrsF/GHiTcq1+R8YUyeduICZ+CRMqFhMgQHr9jv\n0I7+OXuTKONCApLpEpCN7wK7fpP5yw8ByMevKafapVsgF2MCApG/ntNqxTk1o5c2\nUEEtX+4xrwKBgAaanizmiibGGkZpHr1biBUwvhYLdwOpBPXHUpUejgJhJpaGn0Sy\nCjb/8Bqv7dKnmrw0rjf/rFsn3thqvxAWzEZmz3z3ObunSysTFyVOsXtdxLomLhj3\nLu2hC6cclQPfq/S8TqZrpkhtW8KawcHkCZHa+6NlcZc8euKbO/1oUqnfAoGASFWO\nI8YG+0ct6ABClLndZo1wUNY4O3Du7n0FqA6fdr57jIGVPvrNOTF5BWM7UvlaM1Ek\nQmz7vLVAF0yA3jSMgJuNvpLfYm3WzoraL54GP5BHtLmN7VjkVIK52Ghpol2tU+Mo\nZtrs4PYSPKB0tt2Lbd+vLhtSKQkTLIUqRoZGf8kCgYA+0kzcPQih1xq1IfBDX+CI\nhG4eB2ISBauY9ZjBmpra/hWUCwqFxru3bvoyJtt3po595FAUNTDmYQ2GWoVkyJL+\ng6JaC5OMMaYsIA236wGCO9L0AVSoq9iJ1jlqWfu8hR30A5RRCaNXIcbyfBo6Seqa\n9FmNlk9DYPBb2nUKR7ECGg==\n-----END PRIVATE KEY-----\n",
+  "client_email": "lendlyfin-v2-bot-291@lendlyfin-v2.iam.gserviceaccount.com",
+  "client_id": "105761899100668693278",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/lendlyfin-v2-bot-291%40lendlyfin-v2.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

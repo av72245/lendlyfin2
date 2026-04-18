@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="../favicon-192.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lendlyfin — Broker Dashboard</title>
+<link rel="stylesheet" href="../styles.css">
+<script src="../api.js"></script>
+<style>
+/* ── DASHBOARD LAYOUT ─────────────────────────────────── */
+.dash-nav {
+  position: sticky; top: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 36px; height: 64px;
+  background: rgba(8,13,26,0.95); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+.dash-logo { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 700; }
+.dash-logo em { color: var(--accent); font-style: italic; }
+.dash-logo span { font-size: 12px; color: var(--muted); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500; margin-left: 10px; vertical-align: middle; }
+.dash-user { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+.dash-user strong { color: var(--text); }
+.dash-nav-links { display: flex; gap: 4px; }
+.dash-nav-link { color: var(--muted); font-size: 13px; font-weight: 500; text-decoration: none; padding: 7px 13px; border-radius: 8px; transition: all 0.2s; }
+.dash-nav-link:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.dash-nav-link.active { color: var(--accent); background: rgba(0,229,160,0.07); }
+.logout-btn { background: transparent; border: 1px solid var(--border2); color: var(--muted); padding: 7px 14px; border-radius: 8px; font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+.logout-btn:hover { border-color: #F87171; color: #F87171; }
+
+.dash-body { max-width: 1280px; margin: 0 auto; padding: 32px 36px; }
+
+/* ── STAT CARDS ───────────────────────────────────────── */
+.stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 28px; }
+.stat-card { background: var(--card2); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+.stat-card-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+.stat-card-val { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; line-height: 1; }
+.stat-card-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.val-green  { color: var(--accent); }
+.val-blue   { color: var(--accent2); }
+.val-orange { color: var(--orange); }
+.val-purple { color: var(--purple); }
+
+/* ── CONTROLS ROW ─────────────────────────────────────── */
+.controls-row { display: flex; gap: 10px; align-items: center; margin-bottom: 18px; flex-wrap: wrap; }
+.search-input {
+  flex: 1; min-width: 200px; max-width: 320px;
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px; color: var(--text);
+  font-size: 14px; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; transition: border-color 0.2s;
+}
+.search-input:focus { border-color: rgba(0,229,160,0.4); }
+.search-input::placeholder { color: var(--muted2); }
+.ctrl-select {
+  background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 10px 14px; color: var(--text);
+  font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; cursor: pointer;
+}
+.refresh-btn {
+  background: transparent; border: 1px solid var(--border2);
+  color: var(--muted); padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+  cursor: pointer; transition: all 0.2s;
+}
+.refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── LEADS TABLE ──────────────────────────────────────── */
+.leads-card { background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.leads-table { width: 100%; border-collapse: collapse; }
+.leads-table th { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 600; padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); background: var(--card2); }
+.leads-table td { padding: 14px 16px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+.leads-table tr:last-child td { border-bottom: none; }
+.leads-table tr:hover td { background: rgba(255,255,255,0.015); cursor: pointer; }
+
+.lead-name { font-weight: 600; font-size: 14px; }
+.lead-email { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.lead-phone { font-size: 12px; color: var(--muted2); }
+
+/* Status pills */
+.status-pill { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+.s-new        { background: rgba(0,229,160,0.12); color: var(--accent); }
+.s-contacted  { background: rgba(0,200,255,0.12); color: var(--accent2); }
+.s-qualified  { background: rgba(155,127,255,0.12); color: var(--purple); }
+.s-converting { background: rgba(255,140,66,0.12); color: var(--orange); }
+.s-won        { background: rgba(0,229,160,0.2); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); }
+.s-lost       { background: rgba(239,68,68,0.1); color: #F87171; }
+.s-archived   { background: rgba(255,255,255,0.05); color: var(--muted2); }
+
+/* Priority dot */
+.prio-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.prio-0 { background: var(--muted2); }
+.prio-1 { background: var(--orange); }
+.prio-2 { background: #F87171; }
+
+.bp-chip { font-family: 'Fraunces', serif; font-size: 14px; font-weight: 700; color: var(--accent); }
+.empty-state { text-align: center; padding: 64px 24px; color: var(--muted); }
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; }
+.loading-row td { text-align: center; padding: 48px; color: var(--muted); }
+
+/* ── LEAD DETAIL DRAWER ───────────────────────────────── */
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; display: none; backdrop-filter: blur(4px); }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 560px; background: var(--navy2); border-left: 1px solid var(--border2); z-index: 501; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); overflow: hidden; }
+.drawer.open { transform: translateX(0); }
+.drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+.drawer-title { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; }
+.drawer-close { background: transparent; border: none; color: var(--muted); font-size: 22px; cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 6px; transition: color 0.2s; }
+.drawer-close:hover { color: var(--text); }
+.drawer-body { flex: 1; overflow-y: auto; padding: 24px; }
+.drawer-section { margin-bottom: 24px; }
+.drawer-section-title { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+.d-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.d-row:last-child { border-bottom: none; }
+.d-key { font-size: 12px; color: var(--muted); flex-shrink: 0; width: 140px; }
+.d-val { font-size: 13px; font-weight: 500; text-align: right; word-break: break-word; }
+.d-message { background: var(--card2); border-radius: 10px; padding: 14px; font-size: 13px; color: var(--muted); line-height: 1.65; margin-top: 8px; }
+.drawer-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+.action-select { flex: 1; background: var(--card2); border: 1px solid var(--border2); border-radius: 10px; padding: 10px 14px; color: var(--text); font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif; outline: none; }
+.action-btn { background: var(--accent); color: var(--navy); border: none; padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: opacity 0.2s; }
+.action-btn:hover { opacity: 0.85; }
+.action-btn-outline { background: transparent; color: var(--accent2); border: 1px solid rgba(0,200,255,0.3); padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+.action-btn-outline:hover { background: rgba(0,200,255,0.07); }
+.note-item { background: var(--card2); border-radius: 10px; padding: 13px 15px; margin-bottom: 10px; }
+.note-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.note-content { font-size: 13px; line-height: 1.6; }
+.note-input { width: 100%; background: var(--card2); border: 1px solid var(--border2); border-radius: 10px; padding: 12px 14px; color: var(--text); font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif; outline: none; resize: vertical; min-height: 80px; transition: border-color 0.2s; }
+.note-input:focus { border-color: rgba(0,229,160,0.4); }
+.note-submit { margin-top: 8px; background: var(--card2); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); padding: 9px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; font-family: 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s; }
+.note-submit:hover { background: rgba(0,229,160,0.08); }
+.prio-btn { padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 700; border: 1px solid var(--border); background: var(--card2); color: var(--muted); cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: all 0.2s; }
+.prio-btn.selected-0 { border-color: var(--muted2); color: var(--muted); }
+.prio-btn.selected-1 { border-color: var(--orange); color: var(--orange); background: rgba(255,140,66,0.08); }
+.prio-btn.selected-2 { border-color: #F87171; color: #F87171; background: rgba(248,113,113,0.08); }
+
+.interests-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.interest-tag { background: rgba(0,229,160,0.08); border: 1px solid rgba(0,229,160,0.2); color: var(--accent); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="dash-nav">
+  <div>
+    <span class="dash-logo">lendly<em>fin</em> <span>Broker Portal</span></span>
+  </div>
+  <div class="dash-nav-links">
+    <a href="dashboard.html" class="dash-nav-link active">Leads</a>
+    <a href="../rates-admin.html" class="dash-nav-link">Manage Rates</a>
+    <a href="../index.html" class="dash-nav-link">View Site →</a>
+  </div>
+  <div class="dash-user">
+    <strong id="user-name">Loading…</strong>
+    <button class="logout-btn" onclick="Auth.logout()">Sign out</button>
+  </div>
+</nav>
+
+<!-- BODY -->
+<div class="dash-body">
+
+  <!-- STATS ROW -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-card-label">Total Leads</div><div class="stat-card-val val-green" id="st-total">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">New</div><div class="stat-card-val val-blue" id="st-new">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">Contacted</div><div class="stat-card-val" id="st-contacted">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">Converted</div><div class="stat-card-val val-green" id="st-converted">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">Conversion Rate</div><div class="stat-card-val val-purple" id="st-rate">—</div></div>
+    <div class="stat-card"><div class="stat-card-label">This Month</div><div class="stat-card-val val-orange" id="st-month">—</div></div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls-row">
+    <input type="text" class="search-input" id="search-input" placeholder="Search name, email, phone…" oninput="debouncedLoad()">
+    <select class="ctrl-select" id="status-filter" onchange="loadLeads()">
+      <option value="">All statuses</option>
+      <option value="new">New</option>
+      <option value="contacted">Contacted</option>
+      <option value="qualified">Qualified</option>
+      <option value="converting">Converting</option>
+      <option value="won">Won</option>
+      <option value="lost">Lost</option>
+    </select>
+    <select class="ctrl-select" id="priority-filter" onchange="loadLeads()">
+      <option value="">All priorities</option>
+      <option value="2">🔴 Urgent</option>
+      <option value="1">🟠 High</option>
+      <option value="0">Normal</option>
+    </select>
+    <button class="refresh-btn" onclick="loadLeads(); loadStats()">↻ Refresh</button>
+  </div>
+
+  <!-- LEADS TABLE -->
+  <div class="leads-card">
+    <table class="leads-table">
+      <thead>
+        <tr>
+          <th>Lead</th>
+          <th>Enquiry</th>
+          <th>Budget</th>
+          <th>Borrowing Power</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Received</th>
+        </tr>
+      </thead>
+      <tbody id="leads-tbody">
+        <tr class="loading-row"><td colspan="7">Loading leads…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- DRAWER OVERLAY -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<!-- LEAD DETAIL DRAWER -->
+<div class="drawer" id="lead-drawer">
+  <div class="drawer-header">
+    <div class="drawer-title" id="drawer-title">Lead Details</div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body" id="drawer-body">
+    <!-- populated by JS -->
+  </div>
+</div>
+
+<script>
+// ── AUTH GUARD ─────────────────────────────────────────
+if (!Auth.isLoggedIn()) window.location.href = 'login.html';
+
+const user = Auth.getUser();
+if (user) document.getElementById('user-name').textContent = user.full_name;
+
+// ── DEBOUNCE ───────────────────────────────────────────
+let debounceTimer;
+function debouncedLoad() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(loadLeads, 350);
+}
+
+// ── LOAD STATS ─────────────────────────────────────────
+async function loadStats() {
+  try {
+    const s = await LendlyAPI.getStats();
+    document.getElementById('st-total').textContent     = s.total_leads;
+    document.getElementById('st-new').textContent       = s.new_leads;
+    document.getElementById('st-contacted').textContent = s.contacted_leads;
+    document.getElementById('st-converted').textContent = s.converted_leads;
+    document.getElementById('st-rate').textContent      = s.conversion_rate + '%';
+    document.getElementById('st-month').textContent     = s.leads_this_month;
+  } catch(e) { console.error('Stats error:', e); }
+}
+
+// ── LOAD LEADS ─────────────────────────────────────────
+async function loadLeads() {
+  const params = {};
+  const search   = document.getElementById('search-input').value.trim();
+  const status   = document.getElementById('status-filter').value;
+  const priority = document.getElementById('priority-filter').value;
+  if (search)   params.search   = search;
+  if (status)   params.status   = status;
+  if (priority) params.priority = priority;
+
+  const tbody = document.getElementById('leads-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7">Loading…</td></tr>';
+
+  try {
+    const leads = await LendlyAPI.getLeads(params);
+    if (!leads.length) {
+      tbody.innerHTML = `<tr><td colspan="7">
+        <div class="empty-state">
+          <div class="es-icon">📭</div>
+          <div>No leads match your filters</div>
+        </div>
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = leads.map(l => `
+      <tr onclick="openDrawer(${l.id})">
+        <td>
+          <div class="lead-name">${l.first_name} ${l.last_name}</div>
+          <div class="lead-email">${l.email}</div>
+          <div class="lead-phone">${l.phone || '—'}</div>
+        </td>
+        <td><span class="badge badge-blue" style="text-transform:capitalize">${l.enquiry_type.replace('-',' ')}</span></td>
+        <td style="font-size:13px;color:var(--muted)">${l.budget || '—'}</td>
+        <td>${l.estimated_bp ? `<span class="bp-chip">$${Math.round(l.estimated_bp).toLocaleString('en-AU')}</span>` : '<span style="color:var(--muted2)">—</span>'}</td>
+        <td><span class="status-pill s-${l.status}">${l.status}</span></td>
+        <td><span class="prio-dot prio-${l.priority}"></span></td>
+        <td style="font-size:12px;color:var(--muted)">${timeAgo(l.created_at)}</td>
+      </tr>
+    `).join('');
+  } catch(e) {
+    tbody.innerHTML = `<tr class="loading-row"><td colspan="7" style="color:#F87171">Failed to load leads: ${e.message}</td></tr>`;
+  }
+}
+
+// ── DRAWER ─────────────────────────────────────────────
+let currentLeadId = null;
+
+async function openDrawer(id) {
+  currentLeadId = id;
+  document.getElementById('drawer-overlay').style.display = 'block';
+  document.getElementById('lead-drawer').classList.add('open');
+  document.getElementById('drawer-body').innerHTML = '<div style="text-align:center;padding:48px;color:var(--muted)">Loading…</div>';
+  document.getElementById('drawer-title').textContent = 'Lead Details';
+
+  try {
+    const lead = await LendlyAPI.getLead(id);
+    renderDrawer(lead);
+  } catch(e) {
+    document.getElementById('drawer-body').innerHTML = `<div style="color:#F87171;padding:24px">Error: ${e.message}</div>`;
+  }
+}
+
+function closeDrawer() {
+  document.getElementById('lead-drawer').classList.remove('open');
+  setTimeout(() => document.getElementById('drawer-overlay').style.display = 'none', 300);
+  currentLeadId = null;
+}
+
+function renderDrawer(lead) {
+  document.getElementById('drawer-title').textContent = `${lead.first_name} ${lead.last_name}`;
+
+  // Parse interests
+  let interests = [];
+  try { interests = JSON.parse(lead.interests || '[]'); } catch {}
+
+  // Parse notes
+  const notesHtml = (lead.notes || []).length
+    ? lead.notes.map(n => `
+        <div class="note-item">
+          <div class="note-meta">${n.author?.full_name || 'Broker'} · ${timeAgo(n.created_at)}</div>
+          <div class="note-content">${n.content}</div>
+        </div>`).join('')
+    : '<div style="color:var(--muted2);font-size:13px">No notes yet</div>';
+
+  document.getElementById('drawer-body').innerHTML = `
+
+    <!-- ACTIONS -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Update Status</div>
+      <div class="drawer-actions">
+        <select class="action-select" id="d-status">
+          ${['new','contacted','qualified','converting','won','lost','archived'].map(s =>
+            `<option value="${s}" ${lead.status===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`
+          ).join('')}
+        </select>
+        <button class="action-btn" onclick="updateStatus()">Save</button>
+        <a href="mailto:${lead.email}" class="action-btn-outline">Email →</a>
+        ${lead.phone ? `<a href="tel:${lead.phone}" class="action-btn-outline">Call →</a>` : ''}
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:1px">Priority:</span>
+        ${[['Normal',0],['High',1],['Urgent',2]].map(([label,val]) =>
+          `<button class="prio-btn ${lead.priority===val?'selected-'+val:''}" onclick="updatePriority(${val},this)">${label}</button>`
+        ).join('')}
+      </div>
+    </div>
+
+    <!-- CONTACT INFO -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Contact Information</div>
+      <div class="d-row"><span class="d-key">Full name</span><span class="d-val">${lead.first_name} ${lead.last_name}</span></div>
+      <div class="d-row"><span class="d-key">Email</span><span class="d-val"><a href="mailto:${lead.email}" style="color:var(--accent)">${lead.email}</a></span></div>
+      <div class="d-row"><span class="d-key">Phone</span><span class="d-val">${lead.phone ? `<a href="tel:${lead.phone}" style="color:var(--accent2)">${lead.phone}</a>` : '—'}</span></div>
+      <div class="d-row"><span class="d-key">Preferred time</span><span class="d-val">${lead.preferred_time || 'Anytime'}</span></div>
+    </div>
+
+    <!-- ENQUIRY -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Enquiry Details</div>
+      <div class="d-row"><span class="d-key">Type</span><span class="d-val" style="text-transform:capitalize">${lead.enquiry_type.replace('-',' ')}</span></div>
+      <div class="d-row"><span class="d-key">Budget</span><span class="d-val">${lead.budget || 'Not specified'}</span></div>
+      <div class="d-row"><span class="d-key">Received</span><span class="d-val">${new Date(lead.created_at).toLocaleString('en-AU')}</span></div>
+      <div class="d-row"><span class="d-key">Reference</span><span class="d-val" style="color:var(--accent)">#${String(lead.id).padStart(4,'0')}</span></div>
+      ${interests.length ? `
+      <div style="margin-top:12px">
+        <div class="d-key" style="margin-bottom:8px">Interests</div>
+        <div class="interests-tags">${interests.map(i=>`<span class="interest-tag">${i.replace(/-/g,' ')}</span>`).join('')}</div>
+      </div>` : ''}
+      <div style="margin-top:14px">
+        <div class="d-key" style="margin-bottom:8px">Message</div>
+        <div class="d-message">${lead.message}</div>
+      </div>
+    </div>
+
+    <!-- FINANCIAL SNAPSHOT -->
+    ${lead.annual_income ? `
+    <div class="drawer-section">
+      <div class="drawer-section-title">Financial Snapshot (from calculator)</div>
+      ${lead.estimated_bp ? `<div class="d-row"><span class="d-key">Borrowing power</span><span class="d-val" style="color:var(--accent);font-family:'Fraunces',serif;font-size:18px;font-weight:700">$${Math.round(lead.estimated_bp).toLocaleString('en-AU')}</span></div>` : ''}
+      ${lead.annual_income ? `<div class="d-row"><span class="d-key">Annual income</span><span class="d-val">$${Math.round(lead.annual_income).toLocaleString('en-AU')}</span></div>` : ''}
+      ${lead.partner_income ? `<div class="d-row"><span class="d-key">Partner income</span><span class="d-val">$${Math.round(lead.partner_income).toLocaleString('en-AU')}</span></div>` : ''}
+      ${lead.deposit ? `<div class="d-row"><span class="d-key">Deposit</span><span class="d-val">$${Math.round(lead.deposit).toLocaleString('en-AU')}</span></div>` : ''}
+      ${lead.monthly_expenses ? `<div class="d-row"><span class="d-key">Monthly expenses</span><span class="d-val">$${Math.round(lead.monthly_expenses).toLocaleString('en-AU')}/mo</span></div>` : ''}
+      ${lead.dependants !== null ? `<div class="d-row"><span class="d-key">Dependants</span><span class="d-val">${lead.dependants}</span></div>` : ''}
+      ${lead.employment_type ? `<div class="d-row"><span class="d-key">Employment</span><span class="d-val">${lead.employment_type}</span></div>` : ''}
+    </div>` : ''}
+
+    <!-- NOTES -->
+    <div class="drawer-section">
+      <div class="drawer-section-title">Broker Notes</div>
+      <div id="notes-list">${notesHtml}</div>
+      <div style="margin-top:14px">
+        <textarea class="note-input" id="note-input" placeholder="Add a note — call outcome, next steps, anything relevant…"></textarea>
+        <button class="note-submit" onclick="addNote()">Add note →</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── ACTIONS ────────────────────────────────────────────
+async function updateStatus() {
+  const status = document.getElementById('d-status').value;
+  try {
+    await LendlyAPI.updateLead(currentLeadId, { status });
+    loadLeads();
+    loadStats();
+    // Refresh drawer
+    const lead = await LendlyAPI.getLead(currentLeadId);
+    renderDrawer(lead);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function updatePriority(val, btn) {
+  try {
+    await LendlyAPI.updateLead(currentLeadId, { priority: val });
+    // Update button styles
+    document.querySelectorAll('.prio-btn').forEach(b => {
+      b.className = 'prio-btn';
+    });
+    btn.classList.add('selected-' + val);
+    loadLeads();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function addNote() {
+  const input   = document.getElementById('note-input');
+  const content = input.value.trim();
+  if (!content) return;
+
+  try {
+    await LendlyAPI.addNote(currentLeadId, content);
+    input.value = '';
+    // Refresh lead
+    const lead = await LendlyAPI.getLead(currentLeadId);
+    renderDrawer(lead);
+    loadLeads();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── HELPERS ────────────────────────────────────────────
+function timeAgo(dateStr) {
+  const diff = (Date.now() - new Date(dateStr + 'Z').getTime()) / 1000;
+  if (diff < 60)     return 'just now';
+  if (diff < 3600)   return Math.floor(diff/60) + 'm ago';
+  if (diff < 86400)  return Math.floor(diff/3600) + 'h ago';
+  if (diff < 604800) return Math.floor(diff/86400) + 'd ago';
+  return new Date(dateStr).toLocaleDateString('en-AU', { day:'2-digit', month:'short' });
+}
+
+// ── INIT ───────────────────────────────────────────────
+loadStats();
+loadLeads();
+
+// Auto-refresh every 60 seconds
+setInterval(() => { loadLeads(); loadStats(); }, 60000);
+</script>
+</body>
+</html>

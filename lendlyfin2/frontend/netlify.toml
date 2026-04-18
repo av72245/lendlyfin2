@@ -1,0 +1,78 @@
+# Netlify configuration for Lendlyfin frontend
+# Place this file in the /frontend directory
+
+[build]
+  publish = "."
+
+# ── REDIRECTS ────────────────────────────────────────────────
+# Clean URLs — /borrowing-power → borrowing-power.html
+[[redirects]]
+  from = "/borrowing-power"
+  to   = "/borrowing-power.html"
+  status = 200
+
+[[redirects]]
+  from = "/compare-loans"
+  to   = "/compare-loans.html"
+  status = 200
+
+[[redirects]]
+  from = "/repayments"
+  to   = "/repayments.html"
+  status = 200
+
+[[redirects]]
+  from = "/eligibility"
+  to   = "/eligibility.html"
+  status = 200
+
+[[redirects]]
+  from = "/contact"
+  to   = "/contact.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to   = "/admin/login.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/dashboard"
+  to   = "/admin/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/refinancing"
+  to   = "/refinancing.html"
+  status = 200
+
+[[redirects]]
+  from = "/referrals"
+  to   = "/referrals.html"
+  status = 200
+
+# ── SECURITY HEADERS ─────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options            = "DENY"
+    X-XSS-Protection           = "1; mode=block"
+    X-Content-Type-Options     = "nosniff"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=()"
+
+# Cache static assets aggressively
+[[headers]]
+  for = "/styles.css"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"
+
+[[headers]]
+  for = "/api.js"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/mobile.js"
+  [headers.values]
+    Cache-Control = "public, max-age=86400"

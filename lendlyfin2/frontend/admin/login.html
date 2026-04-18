@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/x-icon" href="../favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="../favicon-192.png">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lendlyfin — Broker Login</title>
+<link rel="stylesheet" href="../styles.css">
+<script src="../api.js"></script>
+<style>
+body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+.login-wrap {
+  width: 100%; max-width: 420px; padding: 24px;
+}
+.login-card {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 24px; padding: 44px 40px;
+  position: relative; overflow: hidden;
+}
+.login-card::before {
+  content: ''; position: absolute; top: -60px; right: -60px;
+  width: 200px; height: 200px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,229,160,0.08), transparent 70%);
+  pointer-events: none;
+}
+.login-logo { font-family: 'Fraunces', serif; font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+.login-logo em { color: var(--accent); font-style: italic; }
+.login-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
+.login-form-group { margin-bottom: 18px; }
+.login-label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.login-input {
+  width: 100%; background: var(--card2); border: 1px solid var(--border2);
+  border-radius: 12px; padding: 13px 16px; color: var(--text);
+  font-size: 15px; font-family: 'Plus Jakarta Sans', sans-serif;
+  outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.login-input:focus { border-color: rgba(0,229,160,0.45); box-shadow: 0 0 0 3px rgba(0,229,160,0.08); }
+.login-btn {
+  width: 100%; background: var(--accent); color: var(--navy);
+  padding: 15px; border-radius: 12px; font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px; font-weight: 700; border: none; cursor: pointer;
+  transition: opacity 0.2s; margin-top: 8px;
+}
+.login-btn:hover { opacity: 0.87; }
+.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.login-error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #F87171; margin-bottom: 18px; display: none; }
+.back-link { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+.back-link a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="login-logo">lendly<em>fin</em></div>
+    <div class="login-sub">Broker Portal — sign in to manage leads</div>
+
+    <div class="login-error" id="login-error"></div>
+
+    <div class="login-form-group">
+      <label class="login-label">Email Address</label>
+      <input type="email" class="login-input" id="login-email"
+        placeholder="broker@lendlyfin.com.au" autocomplete="email"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+    <div class="login-form-group">
+      <label class="login-label">Password</label>
+      <input type="password" class="login-input" id="login-pw"
+        placeholder="••••••••" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter') doLogin()">
+    </div>
+
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign in →</button>
+
+    <div class="back-link">
+      <a href="../index.html">← Back to lendlyfin.com.au</a>
+    </div>
+  </div>
+</div>
+
+<script>
+// Redirect if already logged in
+if (Auth.isLoggedIn()) window.location.href = 'dashboard.html';
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-error');
+
+  if (!email || !pw) { showErr('Please enter your email and password.'); return; }
+
+  btn.textContent = 'Signing in…';
+  btn.disabled    = true;
+  err.style.display = 'none';
+
+  try {
+    await LendlyAPI.login(email, pw);
+    window.location.href = 'dashboard.html';
+  } catch(e) {
+    showErr(e.message || 'Login failed. Check your credentials.');
+    btn.textContent = 'Sign in →';
+    btn.disabled    = false;
+  }
+}
+
+function showErr(msg) {
+  const err = document.getElementById('login-error');
+  err.textContent   = msg;
+  err.style.display = 'block';
+}
+
+document.getElementById('login-email').focus();
+</script>
+</body>
+</html>
