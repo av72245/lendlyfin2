@@ -33,15 +33,6 @@ from app.services.google_forms_service import GoogleFormsService
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
 
-# ── DEBUG: ECHO ENDPOINT (remove after debugging) ───────────
-
-@router.post("/debug-echo", response_model=dict)
-async def debug_echo(request: Request):
-    """Temporary: echo back exactly what we receive."""
-    body = await request.json()
-    return {"received_keys": list(body.keys()), "received_data": body}
-
-
 # ── GOOGLE FORMS WEBHOOK ──────────────────────────────────────
 
 @router.post("/google-form", response_model=dict, status_code=201)
@@ -74,12 +65,14 @@ async def receive_google_form_submission(
         lead_data = form_service.parse_google_form_submission(body)
 
         # Create Lead record
+        loan_purpose = lead_data.get('loan_purpose', 'General Enquiry')
         lead = Lead(
             first_name=lead_data.get('first_name', ''),
             last_name=lead_data.get('last_name', ''),
             email=lead_data.get('email', ''),
             phone=lead_data.get('phone', ''),
-            loan_purpose=lead_data.get('loan_purpose', ''),
+            enquiry_type=loan_purpose,  # satisfy NOT NULL constraint
+            loan_purpose=loan_purpose,
             budget=float(lead_data.get('loan_amount', 0) or 0),
             message=lead_data.get('additional_notes', ''),
             ip_address=request.client.host if request.client else None,

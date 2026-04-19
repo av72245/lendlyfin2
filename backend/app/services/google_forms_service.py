@@ -61,16 +61,15 @@ class GoogleFormsService:
         Returns:
             Standardized lead dictionary
         """
-        # This mapping should be customized based on your Google Form entry IDs
-        # You'll find these in the Google Form's pre-filled link or form HTML
-        entry_mapping = {
-            # "entry.XXXXXXXXX": "first_name",
-            # "entry.YYYYYYYYY": "last_name",
-            # etc.
-        }
+        # Support both named fields (from App Script) and entry IDs (legacy)
+        # App Script sends named fields: full_name, email, phone, etc.
+        # Entry ID fallback: entry.XXXXXXXXX keys
 
-        # Split full name into first/last
-        full_name = form_data.get('entry.1426650200', '')
+        # Try named fields first, then fall back to entry IDs
+        full_name = (
+            form_data.get('full_name') or
+            form_data.get('entry.1426650200', '')
+        )
         name_parts = full_name.strip().split(' ', 1)
         first_name = name_parts[0] if name_parts else ''
         last_name = name_parts[1] if len(name_parts) > 1 else ''
@@ -78,14 +77,14 @@ class GoogleFormsService:
         lead = {
             'first_name': first_name,
             'last_name': last_name,
-            'email': form_data.get('entry.1625657728', ''),
-            'phone': form_data.get('entry.1862046678', ''),
-            'loan_amount': form_data.get('entry.655443205', 0),
-            'loan_purpose': form_data.get('entry.2095908657', ''),
-            'property_type': form_data.get('entry.1322805430', ''),
-            'credit_score': form_data.get('entry.1750047089', ''),
-            'employment_status': form_data.get('entry.498771700', ''),
-            'additional_notes': form_data.get('entry.28269328', ''),
+            'email': form_data.get('email') or form_data.get('entry.1625657728', ''),
+            'phone': form_data.get('phone') or form_data.get('entry.1862046678', ''),
+            'loan_amount': form_data.get('loan_amount') or form_data.get('entry.655443205', 0),
+            'loan_purpose': form_data.get('loan_purpose') or form_data.get('entry.2095908657', ''),
+            'property_type': form_data.get('property_type') or form_data.get('entry.1322805430', ''),
+            'credit_score': form_data.get('credit_score') or form_data.get('entry.1750047089', ''),
+            'employment_status': form_data.get('employment_status') or form_data.get('entry.498771700', ''),
+            'additional_notes': form_data.get('additional_notes') or form_data.get('entry.28269328', ''),
             'submission_date': datetime.utcnow().isoformat(),
         }
 
