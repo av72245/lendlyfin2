@@ -36,7 +36,7 @@ router = APIRouter(prefix="/api/leads", tags=["leads"])
 # ── GOOGLE FORMS WEBHOOK ──────────────────────────────────────
 
 @router.post("/google-form", response_model=dict, status_code=201)
-async def receive_google_form_submission(
+async def receive_google_form_submission(  # DEPLOY-MARKER: inline-parser-v2
     request: Request,
     db: Session = Depends(get_db),
 ):
