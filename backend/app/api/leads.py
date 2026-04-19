@@ -61,27 +61,40 @@ async def receive_google_form_submission(
         raise HTTPException(status_code=400, detail="Invalid JSON payload")
 
     try:
-        # Parse form data into standardized lead format
-        lead_data = form_service.parse_google_form_submission(body)
+        # ── Parse fields: accept named keys (App Script) OR entry IDs (legacy) ──
+        def get_field(named_key, entry_id):
+            return body.get(named_key) or body.get(entry_id, '')
+
+        full_name = get_field('full_name', 'entry.1426650200')
+        name_parts = full_name.strip().split(' ', 1)
+        first_name = name_parts[0] if name_parts else ''
+        last_name = name_parts[1] if len(name_parts) > 1 else ''
+
+        email            = get_field('email',             'entry.1625657728')
+        phone            = get_field('phone',             'entry.1862046678')
+        loan_amount      = get_field('loan_amount',       'entry.655443205')
+        loan_purpose     = get_field('loan_purpose',      'entry.2095908657') or 'General Enquiry'
+        property_type    = get_field('property_type',     'entry.1322805430')
+        credit_score     = get_field('credit_score',      'entry.1750047089')
+        employment_status= get_field('employment_status', 'entry.498771700')
+        additional_notes = get_field('additional_notes',  'entry.28269328')
 
         # Create Lead record
-        loan_purpose = lead_data.get('loan_purpose', 'General Enquiry')
         lead = Lead(
-            first_name=lead_data.get('first_name', ''),
-            last_name=lead_data.get('last_name', ''),
-            email=lead_data.get('email', ''),
-            phone=lead_data.get('phone', ''),
-            enquiry_type=loan_purpose,  # satisfy NOT NULL constraint
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            enquiry_type=loan_purpose,  # satisfies NOT NULL constraint
             loan_purpose=loan_purpose,
-            budget=float(lead_data.get('loan_amount', 0) or 0),
-            message=lead_data.get('additional_notes', ''),
+            budget=float(loan_amount or 0),
+            message=additional_notes,
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent", "")[:500],
-            # Store additional form data as JSON
             interests=json.dumps({
-                'property_type': lead_data.get('property_type'),
-                'credit_score': lead_data.get('credit_score'),
-                'employment_status': lead_data.get('employment_status'),
+                'property_type': property_type,
+                'credit_score': credit_score,
+                'employment_status': employment_status,
             })
         )
         db.add(lead)
